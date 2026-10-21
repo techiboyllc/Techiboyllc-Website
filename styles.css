@@ -233,8 +233,8 @@ h2 { margin: 14px 0 0; font-size: clamp(36px, 5.2vw, 62px); line-height: 1.02; f
 h2 em { font-size: 1.08em; }
 .lead { margin-top: 16px; font-size: 17.5px; color: var(--muted); }
 .lead a { color: var(--text); text-decoration: underline; text-decoration-color: var(--a2); text-underline-offset: 3px; }
-.reveal { opacity: 0; transform: translateY(28px); transition: opacity .9s var(--ease) var(--d, 0s), transform .9s var(--ease) var(--d, 0s); }
-.reveal.in { opacity: 1; transform: none; }
+.js .reveal { opacity: 0; transform: translateY(28px); transition: opacity .9s var(--ease) var(--d, 0s), transform .9s var(--ease) var(--d, 0s); }
+.js .reveal.in { opacity: 1; transform: none; }
 
 /* Stats */
 .stats { max-width: 1160px; margin: 90px auto 0; padding: 0 20px; display: grid; grid-template-columns: repeat(4, 1fr); }
@@ -256,9 +256,10 @@ h2 em { font-size: 1.08em; }
 .svc-panels { display: grid; gap: 22px; }
 .panel {
   border-radius: 28px; overflow: hidden; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow);
-  position: relative; opacity: .45; transition: opacity .6s var(--ease), border-color .4s;
+  position: relative; transition: opacity .6s var(--ease), border-color .4s;
 }
-.panel.active { opacity: 1; border-color: var(--border-strong); }
+.js .panel { opacity: .45; }
+.js .panel.active { opacity: 1; border-color: var(--border-strong); }
 .panel::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .4s; background: radial-gradient(500px circle at var(--gx, 50%) var(--gy, 0%), rgba(255, 255, 255, .22), transparent 55%); mix-blend-mode: soft-light; }
 .panel:hover::after { opacity: 1; }
 .panel-visual { position: relative; height: 270px; display: grid; place-items: center; overflow: hidden; background: radial-gradient(ellipse at 50% 120%, color-mix(in srgb, var(--a1) 22%, transparent), transparent 70%), var(--surface-2); border-bottom: 1px solid var(--border); }
@@ -271,7 +272,7 @@ h2 em { font-size: 1.08em; }
   .services { grid-template-columns: 1fr; gap: 10px; }
   .svc-side { position: static; }
   .svc-list { display: none; }
-  .panel { opacity: 1; }
+  .js .panel { opacity: 1; }
   .cta-floor { animation: none; }
   .quote[data-pos="-1"], .quote[data-pos="1"] { opacity: 0; }
 }
@@ -356,6 +357,7 @@ h2 em { font-size: 1.08em; }
 .work-hint { font-size: 14px; color: var(--faint); white-space: nowrap; }
 .work-hint span { display: inline-block; animation: nudge 1.6s ease-in-out infinite; }
 .work-viewport { overflow: hidden; }
+html:not(.js) .work-viewport { overflow-x: auto; }
 .work-track { display: flex; gap: 22px; width: max-content; padding: 0 max(20px, calc((100vw - 1160px) / 2 + 20px)); will-change: transform; }
 .work-card {
   position: relative; flex-shrink: 0; width: clamp(280px, 30vw, 380px); border-radius: 28px; overflow: hidden;
@@ -443,11 +445,12 @@ h2 em { font-size: 1.08em; }
 @media (min-width: 900px) { .testimonials { -webkit-mask-image: linear-gradient(90deg, transparent, #000 17%, #000 83%, transparent); mask-image: linear-gradient(90deg, transparent, #000 17%, #000 83%, transparent); } }
 .quote-stage { position: relative; max-width: 720px; margin: 0 auto; text-align: center; }
 .quote-mark { display: block; height: 70px; font-family: "Instrument Serif", Georgia, serif; font-size: 160px; line-height: 1; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.quotes { display: grid; perspective: 1400px; transform-style: preserve-3d; }
+.quotes { display: grid; gap: 20px; perspective: 1400px; transform-style: preserve-3d; }
 .quote {
-  grid-area: 1 / 1; padding: clamp(26px, 4vw, 44px); border-radius: 28px; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg);
-  opacity: 0; pointer-events: none; transition: transform .9s var(--ease), opacity .9s var(--ease), filter .9s var(--ease);
+  padding: clamp(26px, 4vw, 44px); border-radius: 28px; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg);
+  transition: transform .9s var(--ease), opacity .9s var(--ease), filter .9s var(--ease);
 }
+.js .quote { grid-area: 1 / 1; opacity: 0; pointer-events: none; }
 .quote[data-pos="0"] { opacity: 1; transform: none; pointer-events: auto; z-index: 2; }
 .quote[data-pos="-1"] { opacity: .45; filter: blur(1.5px); transform: translateX(-68%) translateZ(-280px) rotateY(40deg); }
 .quote[data-pos="1"] { opacity: .45; filter: blur(1.5px); transform: translateX(68%) translateZ(-280px) rotateY(-40deg); }
@@ -476,7 +479,8 @@ h2 em { font-size: 1.08em; }
 .plus::after { transform: rotate(90deg); }
 .faq-item button[aria-expanded="true"] .plus { background: var(--ink); color: var(--on-ink); border-color: var(--ink); transform: rotate(180deg); }
 .faq-item button[aria-expanded="true"] .plus::after { transform: rotate(0); }
-.faq-a { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .5s var(--ease); }
+.faq-a { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .5s var(--ease); }
+.js .faq-a { grid-template-rows: 0fr; }
 .faq-a > div { overflow: hidden; }
 .faq-a p { padding: 0 50px 24px 0; color: var(--muted); }
 .faq-a a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--a2); }
@@ -602,8 +606,8 @@ kbd { padding: 2px 7px; border-radius: 6px; font: 11px "JetBrains Mono", ui-mono
 /* ================= Reduced motion ================= */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
-  .reveal { opacity: 1; transform: none; }
-  .panel { opacity: 1; transform: none; }
+  .js .reveal { opacity: 1; transform: none; }
+  .js .panel { opacity: 1; transform: none; }
   .marquee-track { flex-wrap: wrap; width: auto; justify-content: center; }
   .morph .old { display: none; }
   .morph .new { opacity: 1 !important; filter: none !important; transform: none !important; }

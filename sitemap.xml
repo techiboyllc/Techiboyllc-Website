@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://techiboyllc.com/</loc>
+    <lastmod>2026-10-21</lastmod>
+    <image:image><image:loc>https://techiboyllc.com/assets/brand-yama.webp</image:loc></image:image>
+    <image:image><image:loc>https://techiboyllc.com/assets/brand-blkdunes.webp</image:loc></image:image>
+    <image:image><image:loc>https://techiboyllc.com/assets/brand-akshaya.webp</image:loc></image:image>
+    <image:image><image:loc>https://techiboyllc.com/assets/brand-eka.webp</image:loc></image:image>
+    <image:image><image:loc>https://techiboyllc.com/assets/brand-mrgroup.webp</image:loc></image:image>
+    <image:image><image:loc>https://techiboyllc.com/assets/brand-mittri.webp</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://techiboyllc.com/privacy.html</loc>
+    <lastmod>2026-10-21</lastmod>
+  </url>
+  <url>
+    <loc>https://techiboyllc.com/terms.html</loc>
+    <lastmod>2026-10-21</lastmod>
+  </url>
+  <url>
+    <loc>https://techiboyllc.com/refund.html</loc>
+    <lastmod>2026-10-21</lastmod>
+  </url>
+</urlset>
