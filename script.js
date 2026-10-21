@@ -188,6 +188,7 @@
     ['3D & Animated Logos', 'Service', '#services'], ['Brand Strategy', 'Service', '#services'],
     ['Starter plan — $50', 'Plan', '#pricing'], ['Pro plan — $100', 'Plan', '#pricing'], ['Enterprise plan — $150', 'Plan', '#pricing'],
     ['Email support@techiboyllc.com', 'Contact', 'mailto:support@techiboyllc.com'],
+    ['Privacy Policy', 'Legal', 'privacy.html'], ['Terms & Conditions', 'Legal', 'terms.html'], ['Refund Policy', 'Legal', 'refund.html'],
   ];
   let matches = [], active = 0, lastFocus = null;
   const renderList = () => {

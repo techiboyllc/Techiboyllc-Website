@@ -424,3 +424,28 @@ h2 { margin: 16px 0 12px; font-size: clamp(32px, 5vw, 52px); line-height: 1.08; 
   .reveal, .blur-words .w { opacity: 1 !important; transform: none !important; filter: none !important; }
   .marquee-track { flex-wrap: wrap; width: auto; justify-content: center; }
 }
+
+/* ---------- Legal pages ---------- */
+.legal { position: relative; max-width: 760px; margin: 0 auto; padding: 60px 20px 0; }
+.legal .grid-bg { position: fixed; z-index: -1; }
+.legal-back { display: table; margin-bottom: 28px; font-size: 14px; color: var(--muted); transition: color .2s; }
+.legal-back:hover { color: var(--text); }
+.legal h1 { margin: 14px 0 6px; font-size: clamp(34px, 6vw, 52px); line-height: 1.08; font-weight: 700; letter-spacing: -.045em; }
+.legal-updated { font-size: 13.5px; color: var(--faint); }
+.legal-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 26px 0 30px; }
+.legal-tabs a { padding: 6px 12px; border-radius: 8px; font-size: 13.5px; color: var(--muted); border: 1px solid var(--border); transition: color .2s, background .2s; }
+.legal-tabs a:hover { color: var(--text); background: rgba(255, 255, 255, .05); }
+.legal-tabs a[aria-current="page"] { color: #09090b; background: var(--text); border-color: var(--text); }
+.legal-intro { font-size: 17px; color: #d4d4d8; padding-bottom: 26px; border-bottom: 1px solid var(--border); }
+.legal section { padding: 26px 0; border-bottom: 1px solid var(--border); }
+.legal h2 { margin: 0 0 8px; font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
+.legal section p { color: var(--muted); font-size: 15px; }
+.legal ul { margin: 12px 0 0 20px; display: grid; gap: 8px; color: var(--muted); font-size: 15px; }
+.legal ul li::marker { color: var(--purple); }
+.legal-page .site-footer { margin-top: 60px; padding-bottom: 40px; }
+.copyright a { color: var(--muted); }
+.copyright a:hover { color: var(--text); }
+.footer-legal { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 40px; font-size: 13px; }
+.footer-legal a { color: var(--faint); transition: color .2s; }
+.footer-legal a:hover { color: var(--text); }
+.footer-legal + .copyright { margin-top: 14px; }
