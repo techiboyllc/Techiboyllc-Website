@@ -4,6 +4,12 @@
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
+  // Motion (motion.dev) drives spring-based 3D entrances and tilts; without it the CSS fallbacks apply.
+  const M = window.Motion;
+  const useMotion = Boolean(M && M.animate && M.inView) && !reduceMotion;
+  if (useMotion) document.documentElement.classList.add('motion');
+  const spring = { type: 'spring', stiffness: 110, damping: 18, mass: 1 };
+  const tiltSpring = { type: 'spring', stiffness: 260, damping: 24 };
 
   // ---------- Seamless marquees: duplicate each track's items ----------
   $$('.marquee-track').forEach((track) => {
@@ -14,15 +20,32 @@
     });
   });
 
-  // ---------- Scroll reveal ----------
-  const revealObserver = new IntersectionObserver((entries) => {
-    entries.forEach((e) => {
-      if (!e.isIntersecting) return;
-      e.target.classList.add('in');
-      revealObserver.unobserve(e.target);
+  // ---------- Scroll reveal: elements swing in from depth on a spring ----------
+  const revealFrom = {
+    default: { opacity: [0, 1], y: [60, 0], z: [-120, 0], rotateX: [-28, 0] },
+    flip: { opacity: [0, 1], rotateX: [-90, 0], y: [20, 0] },
+    left: { opacity: [0, 1], x: [-80, 0], z: [-160, 0], rotateY: [35, 0] },
+    right: { opacity: [0, 1], x: [80, 0], z: [-160, 0], rotateY: [-35, 0] },
+  };
+  if (useMotion) {
+    $$('.reveal').forEach((el) => {
+      M.inView(el, () => {
+        const delay = parseFloat(el.style.getPropertyValue('--d')) || 0;
+        const from = revealFrom[el.dataset.reveal] || revealFrom.default;
+        el.classList.add('in');
+        M.animate(el, { ...from, transformPerspective: [1000, 1000] }, { ...spring, delay, opacity: { duration: 0.6, delay } });
+      }, { margin: '0px 0px -60px 0px' });
     });
-  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-  $$('.reveal').forEach((el) => revealObserver.observe(el));
+  } else {
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        e.target.classList.add('in');
+        revealObserver.unobserve(e.target);
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    $$('.reveal').forEach((el) => revealObserver.observe(el));
+  }
 
   // ---------- Number tickers ----------
   const countObserver = new IntersectionObserver((entries) => {
@@ -45,15 +68,12 @@
   // ---------- Hero: rotating word, letter by letter ----------
   const flip = $('.flip');
   const words = ['unforgettable.', 'iconic.', 'timeless.', 'bold.'];
+  // The whole word animates: splitting it into per-letter layers breaks its gradient text fill
   const setWord = (w) => {
-    flip.textContent = '';
-    [...w].forEach((ch, i) => {
-      const s = document.createElement('span');
-      s.className = 'ch';
-      s.textContent = ch;
-      s.style.animationDelay = `${i * 0.035}s`;
-      flip.appendChild(s);
-    });
+    flip.textContent = w;
+    flip.classList.remove('in');
+    void flip.offsetWidth; // restart animation
+    flip.classList.add('in');
   };
   if (!reduceMotion) {
     let wi = 0;
@@ -75,7 +95,8 @@
   layout();
   if (!reduceMotion) {
     setInterval(() => {
-      if (document.hidden) return;
+      // The WebGL medallion replaces this stack when 3D is available
+      if (document.hidden || document.documentElement.classList.contains('has-3d')) return;
       const front = cards[order[0]];
       front.classList.add('fling');
       setTimeout(() => {
@@ -121,14 +142,19 @@
   panels.forEach((p) => panelObserver.observe(p));
   panels[0].classList.add('active');
 
-  // ---------- Work: vertical scroll drives a horizontal track ----------
-  const work = $('.work'), track = $('.work-track');
-  const horizontal = !reduceMotion && finePointer && window.matchMedia('(min-width: 900px)').matches;
-  let workDistance = 0;
+  // ---------- Work: a 3D ring of cards that spins as you scroll ----------
+  const work = $('.work'), track = $('.work-track'), workCards = $$('.work-card', track);
+  const ringMode = !reduceMotion && finePointer && window.matchMedia('(min-width: 900px)').matches;
+  const step = 360 / workCards.length;
   const sizeWork = () => {
-    if (!horizontal) { work.classList.add('native'); work.style.height = ''; return; }
-    workDistance = Math.max(track.scrollWidth - window.innerWidth, 0);
-    work.style.height = `${window.innerHeight + workDistance}px`;
+    if (!ringMode) { work.classList.add('native'); work.style.height = ''; return; }
+    work.classList.add('ring-mode');
+    const cardW = clamp(window.innerWidth * 0.24, 280, 360);
+    const radius = cardW / 2 / Math.tan(Math.PI / workCards.length) + 50;
+    track.style.setProperty('--card-w', `${cardW}px`);
+    track.style.setProperty('--radius', `${radius}px`);
+    workCards.forEach((c, i) => c.style.setProperty('--a', `${i * step}deg`));
+    work.style.height = `${window.innerHeight * 3.2}px`;
   };
 
   // ---------- Scroll-linked effects ----------
@@ -145,10 +171,15 @@
     sections.forEach((s, i) => { if (s && s.getBoundingClientRect().top < innerHeight * 0.4) current = i; });
     links.forEach((a, i) => a.classList.toggle('active', i === current));
 
-    if (horizontal) {
+    if (ringMode) {
       const r = work.getBoundingClientRect();
       const p = clamp(-r.top / (work.offsetHeight - innerHeight || 1), 0, 1);
-      track.style.transform = `translateX(${-p * workDistance}px)`;
+      const spin = -p * step * (workCards.length - 1);
+      track.style.setProperty('--spin', `${spin}deg`);
+      workCards.forEach((c, i) => {
+        const facing = Math.cos(((i * step + spin) * Math.PI) / 180);
+        c.style.opacity = String(clamp(0.25 + facing * 0.75, 0, 1));
+      });
     }
 
     const tr = timeline.getBoundingClientRect();
@@ -191,6 +222,27 @@
   window.addEventListener('resize', movePill);
   if (document.fonts) document.fonts.ready.then(() => { movePill(); sizeWork(); onScroll(); });
 
+  // ---------- 3D tilt on a spring, with a moving glare ----------
+  if (finePointer && useMotion) {
+    $$('.tilt3d').forEach((el) => {
+      el.addEventListener('pointermove', (e) => {
+        const r = el.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+        el.style.setProperty('--gx', `${x * 100}%`);
+        el.style.setProperty('--gy', `${y * 100}%`);
+        M.animate(el, { rotateX: (0.5 - y) * 12, rotateY: (x - 0.5) * 14, transformPerspective: 1100 }, tiltSpring);
+      });
+      el.addEventListener('pointerleave', () => M.animate(el, { rotateX: 0, rotateY: 0 }, { ...tiltSpring, stiffness: 120 }));
+    });
+    const wm = $('.wordmark');
+    $('.site-footer').addEventListener('pointermove', (e) => {
+      const r = wm.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      M.animate(wm, { rotateY: x * 18, rotateX: -y * 22, transformPerspective: 800 }, tiltSpring);
+    });
+    $('.site-footer').addEventListener('pointerleave', () => M.animate(wm, { rotateX: 0, rotateY: 0 }, tiltSpring));
+  }
+
   // ---------- Cursor spotlights ----------
   if (finePointer) {
     $$('.spot').forEach((el) => el.addEventListener('pointermove', (e) => {
@@ -232,7 +284,12 @@
   });
   const go = (i) => {
     qi = (i + quotes.length) % quotes.length;
-    quotes.forEach((q, k) => { q.classList.toggle('is-active', k === qi); q.setAttribute('aria-hidden', String(k !== qi)); });
+    quotes.forEach((q, k) => {
+      // -1 / 0 / 1: left, centre and right positions of the 3D coverflow
+      q.dataset.pos = String(((k - qi + quotes.length + 1) % quotes.length) - 1);
+      q.classList.toggle('is-active', k === qi);
+      q.setAttribute('aria-hidden', String(k !== qi));
+    });
     dots.forEach((d, k) => {
       d.setAttribute('aria-selected', 'false');
       if (k === qi) { void d.offsetWidth; d.setAttribute('aria-selected', 'true'); }
