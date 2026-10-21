@@ -1,0 +1,4 @@
+# GitHub Pages (Jekyll) settings: keep repository docs off the public site.
+# Folders starting with "." (such as .claude) are already excluded by Jekyll.
+exclude:
+  - README.md

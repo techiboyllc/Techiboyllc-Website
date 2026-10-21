@@ -27,24 +27,28 @@
     left: { opacity: [0, 1], x: [-80, 0], z: [-160, 0], rotateY: [35, 0] },
     right: { opacity: [0, 1], x: [80, 0], z: [-160, 0], rotateY: [-35, 0] },
   };
+  // Each element is revealed once. Besides the in-view trigger, the scroll handler reveals anything
+  // already in or above the viewport, so a fast fling or an anchor jump can't leave content hidden.
+  const pendingReveal = new Set($$('.reveal'));
+  const reveal = (el) => {
+    if (!pendingReveal.delete(el)) return;
+    el.classList.add('in');
+    if (!useMotion) return;
+    const delay = parseFloat(el.style.getPropertyValue('--d')) || 0;
+    const from = revealFrom[el.dataset.reveal] || revealFrom.default;
+    M.animate(el, { ...from, transformPerspective: [1000, 1000] }, { ...spring, delay, opacity: { duration: 0.6, delay } });
+  };
   if (useMotion) {
-    $$('.reveal').forEach((el) => {
-      M.inView(el, () => {
-        const delay = parseFloat(el.style.getPropertyValue('--d')) || 0;
-        const from = revealFrom[el.dataset.reveal] || revealFrom.default;
-        el.classList.add('in');
-        M.animate(el, { ...from, transformPerspective: [1000, 1000] }, { ...spring, delay, opacity: { duration: 0.6, delay } });
-      }, { margin: '0px 0px -60px 0px' });
-    });
+    pendingReveal.forEach((el) => M.inView(el, () => reveal(el), { margin: '0px 0px -60px 0px' }));
   } else {
     const revealObserver = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         if (!e.isIntersecting) return;
-        e.target.classList.add('in');
+        reveal(e.target);
         revealObserver.unobserve(e.target);
       });
     }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-    $$('.reveal').forEach((el) => revealObserver.observe(el));
+    pendingReveal.forEach((el) => revealObserver.observe(el));
   }
 
   // ---------- Number tickers ----------
@@ -166,6 +170,7 @@
     const y = window.scrollY, max = document.documentElement.scrollHeight - innerHeight;
     progress.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
     toTop.classList.toggle('show', y > innerHeight * 1.2);
+    pendingReveal.forEach((el) => { if (el.getBoundingClientRect().top < innerHeight) reveal(el); });
 
     let current = -1;
     sections.forEach((s, i) => { if (s && s.getBoundingClientRect().top < innerHeight * 0.4) current = i; });
