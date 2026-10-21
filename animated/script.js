@@ -4,36 +4,30 @@
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
-  // ---------- Loader ----------
-  document.body.classList.add('loading');
-  const finishLoading = () => {
-    document.body.classList.remove('loading');
-    document.body.classList.add('loaded');
-  };
-  window.addEventListener('load', () => setTimeout(finishLoading, reduceMotion ? 0 : 900));
-  setTimeout(finishLoading, 3500); // never block the page on a slow asset
-
   $('#year').textContent = new Date().getFullYear();
 
-  // ---------- Split headings into animated characters ----------
-  $$('.split').forEach((el) => {
-    const words = el.textContent.trim().split(/\s+/);
-    el.textContent = '';
-    el.setAttribute('aria-label', words.join(' '));
+  // ---------- Blur-in words ----------
+  // Text nodes are split into word spans; inline elements (e.g. .grad-text) animate as one word.
+  $$('.blur-words').forEach((el) => {
+    const base = parseFloat(el.dataset.delay || 0);
     let i = 0;
-    words.forEach((word, w) => {
-      const wrap = document.createElement('span');
-      wrap.style.display = 'inline-block';
-      wrap.setAttribute('aria-hidden', 'true');
-      [...word].forEach((ch) => {
-        const c = document.createElement('span');
-        c.className = 'char';
-        c.textContent = ch;
-        c.style.transitionDelay = `${i++ * 0.025}s`;
-        wrap.appendChild(c);
+    [...el.childNodes].forEach((node) => {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        node.classList.add('w');
+        node.style.transitionDelay = `${base + i++ * 0.07}s`;
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      node.textContent.split(/(\s+)/).forEach((part) => {
+        if (!part) return;
+        if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(' ')); return; }
+        const w = document.createElement('span');
+        w.className = 'w';
+        w.textContent = part;
+        w.style.transitionDelay = `${base + i++ * 0.07}s`;
+        frag.appendChild(w);
       });
-      el.appendChild(wrap);
-      if (w < words.length - 1) el.appendChild(document.createTextNode(' '));
+      node.replaceWith(frag);
     });
   });
 
@@ -44,17 +38,17 @@
       e.target.classList.add('in');
       revealObserver.unobserve(e.target);
     });
-  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
-  $$('.reveal, .split, .step').forEach((el) => revealObserver.observe(el));
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  $$('.reveal, .blur-words, .bstep').forEach((el) => revealObserver.observe(el));
 
-  // ---------- Counters ----------
+  // ---------- Number ticker ----------
   const countObserver = new IntersectionObserver((entries) => {
     entries.forEach((e) => {
       if (!e.isIntersecting) return;
       countObserver.unobserve(e.target);
       const el = e.target, target = +el.dataset.count;
       if (reduceMotion) { el.textContent = target; return; }
-      const start = performance.now(), dur = 1800;
+      const start = performance.now(), dur = 2000;
       const tick = (t) => {
         const p = Math.min((t - start) / dur, 1);
         el.textContent = Math.round(target * (1 - Math.pow(1 - p, 4)));
@@ -65,45 +59,18 @@
   }, { threshold: 0.6 });
   $$('[data-count]').forEach((el) => countObserver.observe(el));
 
-  // ---------- Rotating hero word ----------
-  const rotator = $('#rotator');
-  const words = ['Iconic.', 'Bold.', 'Timeless.', 'Unforgettable.'];
-  let wi = 0;
-  if (!reduceMotion) {
-    setInterval(() => {
-      rotator.classList.remove('swap-in');
-      rotator.classList.add('swap');
-      setTimeout(() => {
-        wi = (wi + 1) % words.length;
-        rotator.textContent = words[wi];
-        rotator.classList.remove('swap');
-        rotator.classList.add('swap-in');
-      }, 450);
-    }, 3000);
-  }
-
-  // ---------- Scroll: progress bar, nav state, active link, timeline ----------
-  const nav = $('.nav'), progress = $('.progress'), line = $('.timeline-line span');
-  const timeline = $('.timeline');
+  // ---------- Scroll: progress bar, nav state, active link ----------
+  const nav = $('.nav'), progress = $('.progress');
   const links = $$('.nav-links a');
   const sections = links.map((a) => $(a.getAttribute('href')));
-  let lastY = 0, ticking = false;
+  let ticking = false;
   const onScroll = () => {
     const y = window.scrollY, max = document.documentElement.scrollHeight - innerHeight;
     progress.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
-    nav.classList.toggle('scrolled', y > 40);
-    nav.classList.toggle('hide', y > lastY && y > 400);
-    lastY = y;
-
+    nav.classList.toggle('scrolled', y > 10);
     let current = -1;
     sections.forEach((s, i) => { if (s && s.getBoundingClientRect().top < innerHeight * 0.4) current = i; });
     links.forEach((a, i) => a.classList.toggle('active', i === current));
-
-    if (line && timeline) {
-      const r = timeline.getBoundingClientRect();
-      const p = Math.min(Math.max((innerHeight * 0.8 - r.top) / (r.height + innerHeight * 0.3), 0), 1);
-      line.style.setProperty('--p', p);
-    }
     ticking = false;
   };
   window.addEventListener('scroll', () => {
@@ -111,20 +78,86 @@
   }, { passive: true });
   onScroll();
 
-  // ---------- Pricing toggle ----------
-  const toggle = $('.toggle');
-  toggle.addEventListener('click', () => {
-    const annual = toggle.getAttribute('aria-checked') !== 'true';
-    toggle.setAttribute('aria-checked', String(annual));
-    $('[data-billing="monthly"]').classList.toggle('active', !annual);
-    $('[data-billing="annual"]').classList.toggle('active', annual);
+  // ---------- Glowing borders that follow the cursor ----------
+  // Every card in a group tracks the pointer, so nearby cards' borders light up too.
+  if (finePointer) {
+    $$('.glow-group').forEach((group) => {
+      const cards = $$('.glow-card', group);
+      group.addEventListener('pointermove', (e) => {
+        cards.forEach((c) => {
+          const r = c.getBoundingClientRect();
+          c.style.setProperty('--mx', `${e.clientX - r.left}px`);
+          c.style.setProperty('--my', `${e.clientY - r.top}px`);
+        });
+      });
+      group.addEventListener('pointerleave', () => {
+        cards.forEach((c) => { c.style.removeProperty('--mx'); c.style.removeProperty('--my'); });
+      });
+    });
+  }
+
+  // ---------- Pricing tabs ----------
+  const tabs = $$('.tabs button'), pill = $('.tab-pill');
+  const movePill = () => {
+    const sel = tabs.find((t) => t.getAttribute('aria-selected') === 'true');
+    pill.style.width = `${sel.offsetWidth}px`;
+    pill.style.transform = `translateX(${sel.offsetLeft}px)`;
+  };
+  tabs.forEach((tab) => tab.addEventListener('click', () => {
+    if (tab.getAttribute('aria-selected') === 'true') return;
+    tabs.forEach((t) => t.setAttribute('aria-selected', String(t === tab)));
+    movePill();
+    const annual = tab.dataset.billing === 'annual';
     $$('.price span').forEach((el) => {
       el.textContent = annual ? el.dataset.annual : el.dataset.monthly;
       el.classList.remove('flip');
       void el.offsetWidth; // restart animation
       el.classList.add('flip');
     });
+  }));
+  movePill();
+  window.addEventListener('resize', movePill);
+  document.fonts && document.fonts.ready.then(movePill);
+
+  // ---------- Testimonials marquee ----------
+  const quotes = [
+    { initials: 'MR', name: 'Marcus Reid', role: 'CEO, NexaFlow Inc.', text: 'Techiboy transformed our vision into a stunning logo. The process was seamless, and the final result exceeded every expectation. Highly recommend their creative and professional service!' },
+    { initials: 'JK', name: 'Jade Kim', role: 'Founder, Obsidian Label', text: 'Our new logo is everything we dreamed of — bold, modern, and instantly recognizable. Techiboy nailed our brand personality from the very first concept round.' },
+    { initials: 'DW', name: 'David Wei', role: 'Director, Meridian Media', text: 'Within days we had a full brand identity that felt premium, professional, and completely us. Clients constantly compliment our logo. Worth every penny.' },
+  ];
+  const quoteHTML = (q) => `<blockquote class="quote"><div class="stars">★★★★★</div><p>${q.text}</p>
+    <footer><span class="avatar">${q.initials}</span><span><b>${q.name}</b><small>${q.role}</small></span></footer></blockquote>`;
+  $$('[data-quotes]').forEach((track) => {
+    const set = quotes.map(quoteHTML).join('');
+    // Two identical halves so translateX(-50%) loops seamlessly; the second half is hidden from screen readers.
+    track.innerHTML = set + set + `<div aria-hidden="true" style="display:contents">${set + set}</div>`;
   });
+
+  // ---------- Terminal typer ----------
+  const typer = $('.typer');
+  if (typer) {
+    const lines = typer.dataset.lines.split('|');
+    const render = (done, partial) => {
+      typer.innerHTML = done.map((l) => (l.startsWith('✓') ? `<span class="ok">${l}</span>` : l)).join('\n')
+        + (done.length ? '\n' : '') + partial + '<span class="caret"></span>';
+    };
+    if (reduceMotion) render(lines, '');
+    else {
+      const run = async () => {
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+        for (;;) {
+          const done = [];
+          for (const line of lines) {
+            if (line.startsWith('✓')) { await sleep(350); done.push(line); render(done, ''); continue; }
+            for (let c = 1; c <= line.length; c++) { render(done, line.slice(0, c)); await sleep(45); }
+            await sleep(250); done.push(line); render(done, '');
+          }
+          await sleep(3000);
+        }
+      };
+      new IntersectionObserver(([e], obs) => { if (e.isIntersecting) { obs.disconnect(); run(); } }).observe(typer);
+    }
+  }
 
   // ---------- Contact form (Formspree) ----------
   const form = $('.contact-form');
@@ -137,7 +170,7 @@
       const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
       if (!res.ok) throw new Error();
       form.reset();
-      btn.textContent = 'Message Sent ✓';
+      btn.textContent = 'Message sent ✓';
       status.textContent = "Thanks! We'll be in touch within 24 hours.";
     } catch {
       btn.disabled = false;
@@ -145,104 +178,91 @@
     }
   });
 
+  // ---------- Command palette (⌘K / Ctrl+K) ----------
+  const palette = $('.palette'), pInput = $('input', palette), pList = $('.palette-list', palette);
+  const items = [
+    ['Services', 'Section', '#services'], ['Process', 'Section', '#process'], ['Work', 'Section', '#work'],
+    ['Pricing', 'Section', '#pricing'], ['Clients', 'Section', '#clients'], ['Contact us', 'Section', '#contact'],
+    ['Custom Logo Design', 'Service', '#services'], ['Brand Identity Systems', 'Service', '#services'],
+    ['Logo Redesign', 'Service', '#services'], ['Business Branding', 'Service', '#services'],
+    ['3D & Animated Logos', 'Service', '#services'], ['Brand Strategy', 'Service', '#services'],
+    ['Starter plan — $50', 'Plan', '#pricing'], ['Pro plan — $100', 'Plan', '#pricing'], ['Enterprise plan — $150', 'Plan', '#pricing'],
+    ['Email support@techiboyllc.com', 'Contact', 'mailto:support@techiboyllc.com'],
+  ];
+  let matches = [], active = 0, lastFocus = null;
+  const renderList = () => {
+    const q = pInput.value.trim().toLowerCase();
+    matches = items.filter(([label, kind]) => `${label} ${kind}`.toLowerCase().includes(q));
+    active = Math.min(active, Math.max(matches.length - 1, 0));
+    pList.innerHTML = matches.length
+      ? matches.map(([label, kind], i) => `<li role="option" data-i="${i}" aria-selected="${i === active}">${label.replace(/&/g, '&amp;')}<small>${kind}</small></li>`).join('')
+      : '<li class="empty">No results</li>';
+  };
+  const openPalette = () => {
+    lastFocus = document.activeElement;
+    palette.hidden = false; pInput.value = ''; active = 0; renderList(); pInput.focus();
+  };
+  const closePalette = () => { palette.hidden = true; lastFocus && lastFocus.focus(); };
+  const choose = (i) => {
+    const m = matches[i]; if (!m) return;
+    closePalette();
+    if (m[2].startsWith('#')) $(m[2]).scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' });
+    else location.href = m[2];
+  };
+  $$('[data-open-palette]').forEach((b) => b.addEventListener('click', openPalette));
+  $$('[data-close-palette]').forEach((b) => b.addEventListener('click', closePalette));
+  pInput.addEventListener('input', () => { active = 0; renderList(); });
+  pList.addEventListener('click', (e) => { const li = e.target.closest('li[data-i]'); if (li) choose(+li.dataset.i); });
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); palette.hidden ? openPalette() : closePalette(); return; }
+    if (palette.hidden) return;
+    if (e.key === 'Escape') closePalette();
+    else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!matches.length) return;
+      active = (active + (e.key === 'ArrowDown' ? 1 : -1) + matches.length) % matches.length;
+      renderList();
+      $('[aria-selected="true"]', pList).scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') choose(active);
+  });
+
   if (reduceMotion) return;
 
-  // ---------- Pointer effects (desktop only) ----------
-  if (finePointer) {
-    const glow = $('.cursor-glow');
-    window.addEventListener('pointermove', (e) => {
-      glow.classList.add('on');
-      glow.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
-    }, { passive: true });
-
-    $$('.tilt').forEach((el) => {
-      el.addEventListener('pointerenter', () => { el.style.transition = 'transform .15s ease-out, opacity .9s'; });
-      el.addEventListener('pointermove', (e) => {
-        const r = el.getBoundingClientRect();
-        const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-        el.style.transform = `perspective(900px) rotateX(${(0.5 - y) * 10}deg) rotateY(${(x - 0.5) * 10}deg) translateZ(0)`;
-        el.style.setProperty('--mx', `${x * 100}%`);
-        el.style.setProperty('--my', `${y * 100}%`);
-      });
-      el.addEventListener('pointerleave', () => {
-        el.style.transition = 'transform .6s cubic-bezier(.2,.8,.2,1), opacity .9s';
-        el.style.transform = '';
-      });
-    });
-
-    $$('.magnetic').forEach((el) => {
-      el.addEventListener('pointermove', (e) => {
-        const r = el.getBoundingClientRect();
-        el.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * 0.25}px, ${(e.clientY - r.top - r.height / 2) * 0.35}px)`;
-      });
-      el.addEventListener('pointerleave', () => { el.style.transform = ''; });
-    });
-  }
-
-  // ---------- Hero particle network ----------
-  const canvas = $('#hero-canvas'), ctx = canvas.getContext('2d');
-  const hero = $('.hero');
-  const colors = ['100,210,255', '191,90,242', '10,132,255', '255,138,212'];
-  const mouse = { x: -9999, y: -9999 };
-  let particles = [], w = 0, h = 0, dpr = 1, running = true;
-
+  // ---------- Hero sparkles ----------
+  const canvas = $('#sparkles'), ctx = canvas.getContext('2d'), hero = $('.hero');
+  const colors = ['255,255,255', '34,211,238', '168,85,247', '236,72,153'];
+  let stars = [], w = 0, h = 0, running = true;
   const resize = () => {
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     w = hero.clientWidth; h = hero.clientHeight;
     canvas.width = w * dpr; canvas.height = h * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const count = Math.min(Math.floor((w * h) / 14000), 110);
-    particles = Array.from({ length: count }, () => ({
-      x: Math.random() * w, y: Math.random() * h,
-      vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
-      r: Math.random() * 1.8 + 0.6,
+    stars = Array.from({ length: Math.min(Math.floor((w * h) / 9000), 160) }, () => ({
+      x: Math.random() * w, y: Math.random() * h * 0.75,
+      r: Math.random() * 1.3 + 0.3, vy: -(Math.random() * 0.15 + 0.03),
+      t: Math.random() * Math.PI * 2, s: Math.random() * 0.03 + 0.01,
       c: colors[(Math.random() * colors.length) | 0],
     }));
   };
-
   const draw = () => {
     if (!running) return;
     ctx.clearRect(0, 0, w, h);
-    for (let i = 0; i < particles.length; i++) {
-      const p = particles[i];
-      const dx = p.x - mouse.x, dy = p.y - mouse.y, d2 = dx * dx + dy * dy;
-      if (d2 < 22500) { // push away from the cursor
-        const f = (22500 - d2) / 22500 * 0.6;
-        p.x += dx * f * 0.05; p.y += dy * f * 0.05;
-      }
-      p.x += p.vx; p.y += p.vy;
-      if (p.x < 0 || p.x > w) p.vx *= -1;
-      if (p.y < 0 || p.y > h) p.vy *= -1;
-
-      for (let j = i + 1; j < particles.length; j++) {
-        const q = particles[j];
-        const ex = p.x - q.x, ey = p.y - q.y, e2 = ex * ex + ey * ey;
-        if (e2 < 16900) {
-          ctx.strokeStyle = `rgba(${p.c},${(1 - e2 / 16900) * 0.25})`;
-          ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
-        }
-      }
-      ctx.fillStyle = `rgba(${p.c},0.9)`;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+    for (const s of stars) {
+      s.t += s.s; s.y += s.vy;
+      if (s.y < -5) { s.y = h * 0.75; s.x = Math.random() * w; }
+      const a = (Math.sin(s.t) + 1) / 2;
+      ctx.fillStyle = `rgba(${s.c},${0.15 + a * 0.75})`;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r * (0.6 + a * 0.6), 0, Math.PI * 2); ctx.fill();
     }
     requestAnimationFrame(draw);
   };
-
-  hero.addEventListener('pointermove', (e) => {
-    const r = hero.getBoundingClientRect();
-    mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
-  });
-  hero.addEventListener('pointerleave', () => { mouse.x = mouse.y = -9999; });
   window.addEventListener('resize', resize);
-
-  // Pause the canvas when the hero is off-screen to save battery
+  // Pause when the hero is off-screen to save battery
   new IntersectionObserver(([e]) => {
-    const wasRunning = running;
+    const was = running;
     running = e.isIntersecting;
-    if (running && !wasRunning) requestAnimationFrame(draw);
+    if (running && !was) requestAnimationFrame(draw);
   }).observe(hero);
-
   resize();
   requestAnimationFrame(draw);
 })();
