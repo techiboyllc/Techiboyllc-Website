@@ -28,6 +28,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link rel="modulepreload" href="assets/vendor/three.module.min.js">
+  <script type="importmap">{"imports":{"three":"./assets/vendor/three.module.min.js"}}</script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -67,11 +69,12 @@
     <section class="hero" id="top">
       <div class="aurora" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
       <div class="dots" aria-hidden="true"></div>
+      <canvas id="hero3d" aria-hidden="true"></canvas>
 
       <div class="hero-grid">
         <div class="hero-copy">
           <a href="#services" class="badge rise" style="--d:.05s">
-            <span class="badge-dot"></span> Now designing 3D &amp; animated logos
+            <span class="badge-dot"></span> New: 3D &amp; animated logos
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
           </a>
           <h1 class="hero-title">
@@ -91,6 +94,7 @@
         </div>
 
         <div class="hero-visual rise" style="--d:.4s" aria-label="Recent logo projects">
+          <p class="drag-hint" aria-hidden="true"><span>↻</span> Drag the logo to spin it</p>
           <div class="stack" data-stack>
             <figure class="stack-card"><img src="assets/brand-yama.webp" alt="YAMA Events logo"><figcaption>YAMA Events</figcaption></figure>
             <figure class="stack-card"><img src="assets/brand-eka.webp" alt="EKA Financial Consultants logo"><figcaption>EKA Financial</figcaption></figure>
@@ -116,10 +120,10 @@
 
     <!-- STATS -->
     <section class="stats" aria-label="Studio in numbers">
-      <div class="stat reveal"><strong><span data-count="500">0</span>+</strong><p>Logos delivered</p></div>
-      <div class="stat reveal" style="--d:.08s"><strong><span data-count="98">0</span>%</strong><p>Client satisfaction</p></div>
-      <div class="stat reveal" style="--d:.16s"><strong><span data-count="30">0</span>+</strong><p>Industries served</p></div>
-      <div class="stat reveal" style="--d:.24s"><strong><span data-count="48">0</span>h</strong><p>To first concepts</p></div>
+      <div class="stat reveal" data-reveal="flip"><strong><span data-count="500">0</span>+</strong><p>Logos delivered</p></div>
+      <div class="stat reveal" data-reveal="flip" style="--d:.08s"><strong><span data-count="98">0</span>%</strong><p>Client satisfaction</p></div>
+      <div class="stat reveal" data-reveal="flip" style="--d:.16s"><strong><span data-count="30">0</span>+</strong><p>Industries served</p></div>
+      <div class="stat reveal" data-reveal="flip" style="--d:.24s"><strong><span data-count="48">0</span>h</strong><p>To first concepts</p></div>
     </section>
 
     <!-- SERVICES: sticky scroll -->
@@ -137,7 +141,7 @@
         </ol>
       </div>
       <div class="svc-panels">
-        <article class="panel" id="svc-1">
+        <article class="panel tilt3d" id="svc-1">
           <div class="panel-visual v-orbit" aria-hidden="true">
             <img src="assets/logo.webp" alt="">
             <span class="ring r1"><i>Wordmark</i></span><span class="ring r2"><i>Emblem</i></span><span class="ring r3"><i>Mascot</i></span>
@@ -148,7 +152,7 @@
             <ul class="tags"><li>Wordmark</li><li>Emblem</li><li>Mascot</li></ul>
           </div>
         </article>
-        <article class="panel" id="svc-2">
+        <article class="panel tilt3d" id="svc-2">
           <div class="panel-visual v-system" aria-hidden="true">
             <div class="sys-swatches"><span></span><span></span><span></span><span></span></div>
             <div class="sys-type"><b>Aa</b><span>Inter · Instrument Serif</span></div>
@@ -160,7 +164,7 @@
             <ul class="tags"><li>Colour system</li><li>Typography</li><li>Guidelines</li></ul>
           </div>
         </article>
-        <article class="panel" id="svc-3">
+        <article class="panel tilt3d" id="svc-3">
           <div class="panel-visual v-redesign" aria-hidden="true">
             <div class="morph"><span class="old">Brand</span><span class="new">Brand</span></div>
             <div class="morph-label"><span>Before</span><span>After</span></div>
@@ -171,7 +175,7 @@
             <ul class="tags"><li>Refresh</li><li>Modernise</li><li>Rebrand</li></ul>
           </div>
         </article>
-        <article class="panel" id="svc-4">
+        <article class="panel tilt3d" id="svc-4">
           <div class="panel-visual v-card" aria-hidden="true">
             <div class="biz-card">
               <div class="biz-front"><img src="assets/logo.webp" alt=""><b>TECHIBOY</b></div>
@@ -184,7 +188,7 @@
             <ul class="tags"><li>Print</li><li>Digital</li><li>Social kit</li></ul>
           </div>
         </article>
-        <article class="panel" id="svc-5">
+        <article class="panel tilt3d" id="svc-5">
           <div class="panel-visual v-cube" aria-hidden="true">
             <div class="cube"><span></span><span></span><span></span><span></span><span></span><span></span></div>
           </div>
@@ -194,7 +198,7 @@
             <ul class="tags"><li>3D render</li><li>Motion</li><li>Video intro</li></ul>
           </div>
         </article>
-        <article class="panel" id="svc-6">
+        <article class="panel tilt3d" id="svc-6">
           <div class="panel-visual v-terminal" aria-hidden="true">
             <div class="term-bar"><i></i><i></i><i></i><span>brand-strategy</span></div>
             <pre class="typer" data-lines="$ research --competitors|✓ market gaps identified|$ define --voice|✓ bold · modern · trustworthy|$ position --brand|✓ ready to design"></pre>
@@ -216,7 +220,7 @@
             <p class="eyebrow reveal">Selected work</p>
             <h2 class="reveal">Marks we're <em>proud of</em></h2>
           </div>
-          <p class="work-hint reveal">Scroll to explore <span aria-hidden="true">→</span></p>
+          <p class="work-hint reveal">Scroll to spin <span aria-hidden="true">↻</span></p>
         </div>
         <div class="work-viewport">
           <div class="work-track">
@@ -240,10 +244,10 @@
       </div>
       <div class="timeline">
         <div class="timeline-line" aria-hidden="true"><span></span></div>
-        <div class="tl-step reveal"><span class="tl-dot">01</span><div class="tl-card"><h3>Discovery</h3><p>We learn your brand story, industry, competitors and goals — the strategic foundation for a logo that truly fits.</p></div></div>
-        <div class="tl-step reveal"><span class="tl-dot">02</span><div class="tl-card"><h3>Concept design</h3><p>Our designers explore multiple directions and refine the strongest into polished logo options for your review.</p></div></div>
-        <div class="tl-step reveal"><span class="tl-dot">03</span><div class="tl-card"><h3>Refinement</h3><p>You pick a favourite and we fine-tune every detail — colours, proportions, typography — until it's perfect.</p></div></div>
-        <div class="tl-step reveal"><span class="tl-dot">04</span><div class="tl-card"><h3>Final delivery</h3><p>Every format you need — PNG, SVG, PDF, EPS — plus brand guidelines, ready to deploy.</p></div></div>
+        <div class="tl-step reveal" data-reveal="left"><span class="tl-dot">01</span><div class="tl-card"><h3>Discovery</h3><p>We learn your brand story, industry, competitors and goals — the strategic foundation for a logo that truly fits.</p></div></div>
+        <div class="tl-step reveal" data-reveal="right"><span class="tl-dot">02</span><div class="tl-card"><h3>Concept design</h3><p>Our designers explore multiple directions and refine the strongest into polished logo options for your review.</p></div></div>
+        <div class="tl-step reveal" data-reveal="left"><span class="tl-dot">03</span><div class="tl-card"><h3>Refinement</h3><p>You pick a favourite and we fine-tune every detail — colours, proportions, typography — until it's perfect.</p></div></div>
+        <div class="tl-step reveal" data-reveal="right"><span class="tl-dot">04</span><div class="tl-card"><h3>Final delivery</h3><p>Every format you need — PNG, SVG, PDF, EPS — plus brand guidelines, ready to deploy.</p></div></div>
       </div>
     </section>
 
@@ -274,7 +278,7 @@
         </div>
       </div>
       <div class="plans spot-group">
-        <article class="plan spot reveal">
+        <article class="plan spot tilt3d reveal">
           <h3>Starter</h3>
           <p class="plan-desc">For startups and small businesses ready to establish a professional brand presence.</p>
           <p class="price"><sup>$</sup><span data-monthly="50" data-annual="40">50</span><small>/ project</small></p>
@@ -284,7 +288,7 @@
             <li class="no">Brand guidelines</li><li class="no">Social media kit</li><li class="no">3D / animated logo</li>
           </ul>
         </article>
-        <article class="plan spot featured reveal" style="--d:.08s">
+        <article class="plan spot featured tilt3d reveal" style="--d:.08s">
           <span class="plan-badge">Most popular</span>
           <h3>Pro</h3>
           <p class="plan-desc">For growing brands that need a complete, professional identity system.</p>
@@ -295,7 +299,7 @@
             <li>Brand guidelines PDF</li><li>Social media kit (10 templates)</li><li class="no">3D / animated logo</li>
           </ul>
         </article>
-        <article class="plan spot reveal" style="--d:.16s">
+        <article class="plan spot tilt3d reveal" style="--d:.16s">
           <h3>Enterprise</h3>
           <p class="plan-desc">Full-scale identity for established companies demanding world-class design and strategy.</p>
           <p class="price"><sup>$</sup><span data-monthly="150" data-annual="120">150</span><small>/ project</small></p>
@@ -378,6 +382,7 @@
     <section id="contact" class="section">
       <div class="cta">
         <div class="aurora" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        <div class="cta-floor" aria-hidden="true"></div>
         <div class="cta-copy">
           <p class="eyebrow">Let's talk</p>
           <h2>Ready for a logo <em>that lasts?</em></h2>
@@ -447,6 +452,8 @@
   </div>
 
   <script src="theme.js"></script>
+  <script src="assets/vendor/motion.min.js"></script>
   <script src="script.js"></script>
+  <script type="module" src="scene3d.js"></script>
 </body>
 </html>
