@@ -15,6 +15,7 @@ Animated, hand-coded site for techiboyllc.com (plain HTML/CSS/JS — no build st
 | `classic/` | The previous liquid-glass design, kept as a self-contained backup |
 | `animated/` | Redirects old `/animated/` links to the homepage |
 | `robots.txt`, `sitemap.xml` | Tell search engines what to crawl and list every public page |
+| `llms.txt` | Plain-text summary of the business for AI assistants (ChatGPT, Gemini, Claude); update it when services or prices change |
 | `404.html` | "Page not found" page served by GitHub Pages |
 | `favicon.ico`, `site.webmanifest`, `assets/icon-*.png` | Icons for browsers and Google search results |
 | `_config.yml` | GitHub Pages settings (keeps this README off the public site) |
